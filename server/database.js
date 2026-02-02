@@ -29,6 +29,23 @@ function initDb() {
             role TEXT DEFAULT 'free'
         )`);
 
+        // Coupons Table
+        db.run(`CREATE TABLE IF NOT EXISTS coupons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE,
+            description TEXT,
+            discountType TEXT, -- 'percentage' or 'fixed'
+            discountValue REAL,
+            minPurchaseAmount REAL DEFAULT 0,
+            maxUses INTEGER DEFAULT NULL,
+            currentUses INTEGER DEFAULT 0,
+            validFrom TEXT,
+            validUntil TEXT,
+            isActive INTEGER DEFAULT 1,
+            createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Projects Table
         db.run(`CREATE TABLE IF NOT EXISTS projects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,8 +72,24 @@ function initDb() {
             projectId INTEGER,
             licenseType TEXT,
             purchaseDate TEXT,
+            originalPrice REAL,
+            finalPrice REAL,
+            couponId INTEGER DEFAULT NULL,
             FOREIGN KEY(userId) REFERENCES users(id),
-            FOREIGN KEY(projectId) REFERENCES projects(id)
+            FOREIGN KEY(projectId) REFERENCES projects(id),
+            FOREIGN KEY(couponId) REFERENCES coupons(id)
+        )`);
+
+        // Coupon Usage Tracking
+        db.run(`CREATE TABLE IF NOT EXISTS coupon_usages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            couponId INTEGER,
+            userId INTEGER,
+            licenseId INTEGER,
+            usedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(couponId) REFERENCES coupons(id),
+            FOREIGN KEY(userId) REFERENCES users(id),
+            FOREIGN KEY(licenseId) REFERENCES licenses(id)
         )`);
 
         console.log('Database tables initialized.');

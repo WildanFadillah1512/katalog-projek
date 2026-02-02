@@ -65,27 +65,17 @@ app.get('/api/auth/me', (req, res) => {
 // Middleware for user authentication
 function requireAuth(req, res, next) {
     const token = req.headers.authorization;
-    console.log('🔍 Auth Debug:', {
-        token,
-        allHeaders: req.headers,
-        method: req.method,
-        url: req.url
-    });
-
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
     const userId = token.replace('Bearer ', '').split('-').pop();
-    console.log('📋 Extracted userId:', userId);
     const sql = 'SELECT * FROM users WHERE id = ?';
-
+    
     db.get(sql, [userId], (err, row) => {
         if (err || !row) {
-            console.log('❌ Token validation failed:', { err, row });
             return res.status(401).json({ message: 'Invalid token' });
         }
-        console.log('✅ Token valid for user:', row.email);
         req.user = row;
         next();
     });

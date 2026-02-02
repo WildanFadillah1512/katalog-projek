@@ -63,23 +63,135 @@ const projects = [
     }
 ];
 
-db.serialize(() => {
-    console.log('Seeding projects...');
-    // Clear existing
-    db.run('DELETE FROM projects');
+const users = [
+    {
+        name: 'Admin User',
+        email: 'admin@smartindus.com',
+        password: 'admin123', // In production, this should be hashed
+        role: 'admin'
+    },
+    {
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'user123',
+        role: 'free'
+    },
+    {
+        name: 'Jane Premium',
+        email: 'jane@example.com',
+        password: 'premium123',
+        role: 'premium'
+    }
+];
 
-    const stmt = db.prepare(`INSERT INTO projects (
+const coupons = [
+    {
+        code: 'WELCOME10',
+        description: 'Welcome discount for new users',
+        discountType: 'percentage',
+        discountValue: 10,
+        minPurchaseAmount: 20,
+        maxUses: 100,
+        currentUses: 25,
+        validFrom: new Date('2026-01-01').toISOString(),
+        validUntil: new Date('2026-12-31').toISOString(),
+        isActive: 1
+    },
+    {
+        code: 'SUMMER25',
+        description: 'Summer sale - 25% off on all premium projects',
+        discountType: 'percentage',
+        discountValue: 25,
+        minPurchaseAmount: 30,
+        maxUses: 50,
+        currentUses: 12,
+        validFrom: new Date('2026-02-01').toISOString(),
+        validUntil: new Date('2026-03-31').toISOString(),
+        isActive: 1
+    },
+    {
+        code: 'FIXED15',
+        description: 'Fixed $15 discount for orders above $50',
+        discountType: 'fixed',
+        discountValue: 15,
+        minPurchaseAmount: 50,
+        maxUses: null,
+        currentUses: 8,
+        validFrom: new Date('2026-02-01').toISOString(),
+        validUntil: new Date('2026-06-30').toISOString(),
+        isActive: 1
+    },
+    {
+        code: 'EXPIRED10',
+        description: 'Expired test coupon',
+        discountType: 'percentage',
+        discountValue: 10,
+        minPurchaseAmount: 0,
+        maxUses: 10,
+        currentUses: 5,
+        validFrom: new Date('2025-12-01').toISOString(),
+        validUntil: new Date('2025-12-31').toISOString(),
+        isActive: 0
+    }
+];
+
+db.serialize(() => {
+    console.log('Seeding database...');
+
+    // Clear existing data
+    db.run('DELETE FROM projects');
+    db.run('DELETE FROM users');
+    db.run('DELETE FROM coupons');
+    db.run('DELETE FROM licenses');
+    db.run('DELETE FROM coupon_usages');
+
+    // Seed projects
+    console.log('Seeding projects...');
+    const projectStmt = db.prepare(`INSERT INTO projects (
         slug, title, shortDescription, fullDescription, thumbnail, techStack, category, accessLevel, price, demoUrl, featured, rating, totalReviews
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
     projects.forEach(p => {
-        stmt.run(
+        projectStmt.run(
             p.slug, p.title, p.shortDescription, p.fullDescription, p.thumbnail,
             p.techStack, p.category, p.accessLevel, p.price, p.demoUrl,
             p.featured, p.rating, p.totalReviews
         );
     });
+    projectStmt.finalize();
 
-    stmt.finalize();
-    console.log('Seeding complete.');
+    // Seed users
+    console.log('Seeding users...');
+    const userStmt = db.prepare(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`);
+
+    users.forEach(u => {
+        userStmt.run(u.name, u.email, u.password, u.role);
+    });
+    userStmt.finalize();
+
+    // Seed coupons
+    console.log('Seeding coupons...');
+    const couponStmt = db.prepare(`INSERT INTO coupons (
+        code, description, discountType, discountValue, minPurchaseAmount, maxUses, currentUses, validFrom, validUntil, isActive
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+    coupons.forEach(c => {
+        couponStmt.run(
+            c.code, c.description, c.discountType, c.discountValue,
+            c.minPurchaseAmount, c.maxUses, c.currentUses, c.validFrom, c.validUntil, c.isActive
+        );
+    });
+    couponStmt.finalize();
+
+    console.log('Seeding complete!');
+    console.log('\\nAdmin credentials:');
+    console.log('Email: admin@smartindus.com');
+    console.log('Password: admin123');
+    console.log('\\nTest user credentials:');
+    console.log('Email: john@example.com');
+    console.log('Password: user123');
+    console.log('\\nTest coupons:');
+    coupons.forEach(c => {
+        console.log(`- ${c.code}: ${c.description}`);
+    });
 });
